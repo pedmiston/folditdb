@@ -1,7 +1,7 @@
 from os import environ
 
 from sqlalchemy import create_engine, Column, String, Float
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 DB = create_engine(environ['MYSQL_FOLDIT_DB'])
@@ -10,9 +10,15 @@ Session.configure(bind=DB)
 
 Base = declarative_base()
 
-class Score(Base):
-    __tablename__ = 'Scores'
+class Puzzle(Base):
+    __tablename__ = 'puzzle'
+    id = Column(Integer, primary_key=True, nullable=False)
+    solutions = relationship('Score')
+
+class Solution(Base):
+    __tablename__ = 'score'
     id = Column(String(60), primary_key=True, nullable=False)
+    puzzle_id = Column(Integer, ForeignKey('puzzle.id'))
     score = Column(Float)
 
 # Create tables that do not exist yet
