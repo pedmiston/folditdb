@@ -17,7 +17,7 @@ def data():
         PDL='. bill,myteam,100,200'
     )
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def session():
     DB = create_engine(environ['MYSQL_FOLDIT_TEST_DB'])
     Base.metadata.create_all(DB)
