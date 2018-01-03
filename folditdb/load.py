@@ -8,9 +8,7 @@ def load_solutions(solutions):
         solution = IRData.from_json(solution_json)
         print(solution.filename)
 
-def load_solution(data, session):
-    irdata = IRData(data)
-
+def load_solution(irdata, session):
     solution = irdata.to_model_object('Solution')
     puzzle = irdata.to_model_object('Puzzle')
 

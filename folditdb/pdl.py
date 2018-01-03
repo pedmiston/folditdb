@@ -10,21 +10,8 @@ class PDL:
             team_id=int(fields[3])
         )
 
-    @property
-    def player_name(self):
-        return self._data['player_name']
-
-    @property
-    def team_name(self):
-        return self._data['team_name']
-
-    @property
-    def player_id(self):
-        return self._data['player_id']
-
-    @property
-    def team_id(self):
-        return self._data['team_id']
+    def __getattr__(self, key):
+        return self._data[key]
 
     def to_model_object(self, name):
         """Create a model object."""
