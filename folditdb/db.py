@@ -1,6 +1,6 @@
 from os import environ
 
-from sqlalchemy import create_engine, Column, String, Float
+from sqlalchemy import create_engine, Column, String, Float, Integer, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -13,7 +13,7 @@ Base = declarative_base()
 class Puzzle(Base):
     __tablename__ = 'puzzle'
     id = Column(Integer, primary_key=True, nullable=False)
-    solutions = relationship('Score')
+    solutions = relationship('Solution')
 
 class Solution(Base):
     __tablename__ = 'score'

@@ -5,8 +5,8 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from folditdb.db import Base, Score
-from folditdb.solution import Solution
+from folditdb.db import Base, Solution
+from folditdb.solution import SolutionData
 from folditdb.scores import add_score
 
 
@@ -23,11 +23,11 @@ def session():
 
 def test_put_scores_in_db(session):
     data = dict(HISTORY='1,2,3', SCORE='134.2')
-    solution = Solution(data)
+    solution = SolutionData(data)
     add_score(solution, session)
     session.commit()
 
-    results = session.query(Score)
+    results = session.query(Solution)
     assert len(results.all()) == 1
     score = results.first()
     assert score.id == '3'

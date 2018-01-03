@@ -1,6 +1,6 @@
-from folditdb.db import Score
+from folditdb.db import Solution
 
-class Solution:
+class SolutionData:
     def __init__(self, data):
         self._data = data
 
@@ -29,7 +29,7 @@ class Solution:
         return [self.solution_id, self.solution_score]
 
     def to_score_obj(self):
-        return Score(id=self.solution_id, score=self.solution_score)
+        return Solution(id=self.solution_id, score=self.solution_score)
 
 
 class InvalidSolutionError(Exception):
