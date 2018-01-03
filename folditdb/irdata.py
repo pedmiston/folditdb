@@ -1,3 +1,5 @@
+import json
+
 from folditdb import tables
 
 class IRData:
