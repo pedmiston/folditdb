@@ -1,12 +1,7 @@
 import argparse
-import json
 from pathlib import Path
-from folditdb.solution import Solution
 
-def load_solutions(solutions):
-    for solution_json in open(solutions):
-        solution = Solution(json.loads(solution_json))
-        print(solution.filename)
+from folditdb.load import load_solutions
 
 def main():
     parser = argparse.ArgumentParser('folditdb')

@@ -1,34 +1,19 @@
-from os import environ
+from folditdb.irdata import IRData
+from folditdb.tables import Solution
 
-import pytest
+def test_put_scores_in_db(session, data):
+    irdata = IRData(data)
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+    solution = irdata.to_model_object('Solution')
+    puzzle = irdata.to_model_object('Puzzle')
 
-from folditdb.db import Base, Solution
-from folditdb.solution import SolutionData
-from folditdb.scores import add_score
+    session.add(solution)
+    session.add(puzzle)
 
-
-@pytest.fixture(scope='module')
-def session():
-    DB = create_engine(environ['MYSQL_FOLDIT_TEST_DB'])
-    Base.metadata.create_all(DB)
-    Session = sessionmaker()
-    Session.configure(bind=DB)
-    s = Session()
-    yield s
-    s.close()
-    Base.metadata.drop_all(DB)
-
-def test_put_scores_in_db(session):
-    data = dict(HISTORY='1,2,3', SCORE='134.2')
-    solution = SolutionData(data)
-    add_score(solution, session)
     session.commit()
 
     results = session.query(Solution)
     assert len(results.all()) == 1
     score = results.first()
-    assert score.id == '3'
+    assert score.id == 1
     assert score.score == 134.2
