@@ -1,4 +1,5 @@
 from folditdb.irdata import IRData
+from folditdb.pdl import PDL
 
 def test_create_irdata_object(data):
     irdata = IRData(data)

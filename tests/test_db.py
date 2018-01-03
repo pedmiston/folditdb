@@ -1,4 +1,5 @@
 from folditdb.irdata import IRData
+from folditdb.pdl import PDL
 from folditdb.tables import Solution
 
 def test_put_scores_in_db(session, data):
@@ -9,6 +10,15 @@ def test_put_scores_in_db(session, data):
 
     session.add(solution)
     session.add(puzzle)
+
+    for pdl_str in irdata.pdl_strings():
+        pdl = PDL(pdl_str)
+
+        player = pdl.to_model_object('Player')
+        team = pdl.to_model_object('Team')
+
+        session.add(player)
+        session.add(team)
 
     session.commit()
 

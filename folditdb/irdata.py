@@ -31,6 +31,7 @@ class IRData:
     def __init__(self, data):
         """Create an IRData object from a dict of IRData keys and values."""
         self._data = data
+        self._pdl = None
 
     @classmethod
     def from_json(cls, json_str):
@@ -71,14 +72,17 @@ class IRData:
             raise InvalidSolutionError
         return score
 
-    def solution_scores(self):
-        return [self.solution_id, self.solution_score]
-
     def to_model_object(self, name):
         """Create a model object."""
         Model = getattr(tables, name)
         model = Model.from_irdata(self)
         return model
+
+    def pdl_strings(self):
+        pdls = self._data['PDL']
+        if not isinstance(pdls, list):
+            pdls = [pdls, ]
+        return pdls
 
 
 class InvalidSolutionError(Exception):

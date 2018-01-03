@@ -9,7 +9,13 @@ from folditdb.tables import Base
 
 @pytest.fixture
 def data():
-    return dict(SID='1', PID='1', HISTORY='V1:10,V2:5,V3:4', SCORE='134.2')
+    return dict(
+        SID='1',
+        PID='1',
+        HISTORY='V1:10,V2:5,V3:4',
+        SCORE='134.2',
+        PDL='. bill,myteam,100,200'
+    )
 
 @pytest.fixture(scope='module')
 def session():
