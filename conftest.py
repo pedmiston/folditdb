@@ -27,3 +27,16 @@ def session():
     yield s
     s.close()
     Base.metadata.drop_all(DB)
+
+@pytest.fixture
+def solution_data_with_multiple_players():
+    return dict(
+        SID='1',
+        PID='1',
+        HISTORY='V1:10,V2:5,V3:4',
+        SCORE='134.2',
+        PDL=[
+            '. bill,myteam,100,200',
+            '. jim,myteam,101,200',
+        ]
+    )

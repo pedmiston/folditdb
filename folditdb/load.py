@@ -1,3 +1,5 @@
+from sqlalchemy.exc import IntegrityError
+
 from folditdb.irdata import IRData
 from folditdb.pdl import PDL
 
@@ -18,12 +20,10 @@ def load_solution(data, session):
     for pdl_str in irdata.pdl_strings():
         pdl = PDL(pdl_str)
 
-        player = pdl.to_model_object('Player')
-        player.solutions.append(solution)
-
         team = pdl.to_model_object('Team')
+        team = session.merge(team)
 
+        player = pdl.to_model_object('Player')
+        player = session.merge(player)
+        player.solutions.append(solution)
         session.add(player)
-        session.add(team)
-
-    session.commit()

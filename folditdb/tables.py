@@ -1,11 +1,13 @@
-from sqlalchemy import Column, String, Float, Integer, ForeignKey
+from sqlalchemy import Table, Column, String, Float, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
-from folditdb.db import DB
-
 Base = declarative_base()
 
+association_table = Table('association', Base.metadata,
+    Column('solution_id', Integer, ForeignKey('solution.id')),
+    Column('player_id', Integer, ForeignKey('player.id'))
+)
 
 class Puzzle(Base):
     __tablename__ = 'puzzle'
@@ -22,11 +24,12 @@ class Puzzle(Base):
 
 class Solution(Base):
     __tablename__ = 'solution'
-    id = Column(Integer, primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True)
     puzzle_id = Column(Integer, ForeignKey('puzzle.id'))
-    player_id = Column(Integer, ForeignKey('player.id'))
     history_id = Column(String(60))
     score = Column(Float)
+    players = relationship('Player', secondary=association_table,
+                           backref='solutions')
 
     @classmethod
     def from_irdata(cls, irdata):
@@ -41,10 +44,9 @@ class Solution(Base):
 
 class Player(Base):
     __tablename__ = 'player'
-    id = Column(Integer, primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True)
     name = Column(String(60))
     team_id = Column(Integer, ForeignKey('team.id'))
-    solutions = relationship('Solution')
 
     @classmethod
     def from_pdl(cls, pdl):
@@ -57,7 +59,7 @@ class Player(Base):
 
 class Team(Base):
     __tablename__ = 'team'
-    id = Column(Integer, primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True)
     name = Column(String(60))
     players = relationship('Player')
 
@@ -68,7 +70,3 @@ class Team(Base):
             name=pdl.team_name
         )
         return cls(**data)
-
-
-# Create tables that do not exist yet
-Base.metadata.create_all(DB)
