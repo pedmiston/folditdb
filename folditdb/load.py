@@ -5,7 +5,11 @@ from folditdb.tables import Base
 from folditdb.irdata import IRData
 from folditdb.pdl import PDL
 
-def load_solution(irdata, session):
+def load_solution(irdata, session=None):
+    local_session = (session is None)
+    if local_session:
+        session = Session()
+
     solution = irdata.to_model_object('Solution')
     puzzle = irdata.to_model_object('Puzzle')
 
@@ -25,9 +29,14 @@ def load_solution(irdata, session):
 
     session.commit()
 
-def load_solutions_from_file(solutions_file):
-    Base.metadata.create_all(DB)
+    if local_session:
+        session.close()
+
+def load_single_solution_from_file(solution_file, session=None):
+    irdata = IRData.from_file(solution_file)
+    load_solution(irdata, session)
+
+def load_solutions_from_file(solutions_file, session=None):
     for json_str in open(solutions_file):
-        session = Session()
         irdata = IRData.from_json(json_str)
         load_solution(irdata, session)
