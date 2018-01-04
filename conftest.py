@@ -12,7 +12,7 @@ from folditdb.irdata import IRData
 _solution_data = dict(
     SID='1',
     PID='1',
-    HISTORY='V1:10,V2:5,V3:4',
+    HISTORY='V0:0,V1:10,V2:5,V3:4',
     SCORE='134.2',
     PDL='. bill,myteam,100,200',
 )

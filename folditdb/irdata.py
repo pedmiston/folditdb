@@ -45,7 +45,7 @@ class IRData:
 
     @property
     def filename(self):
-        return self._data['FILEPATH']
+        return self._data.get('FILEPATH')
 
     @property
     def solution_id(self):
@@ -58,18 +58,24 @@ class IRData:
     @property
     def history_id(self):
         if 'HISTORY' not in self._data:
-            raise InvalidSolutionError
+            return None
         return self._data['HISTORY'].split(',')[-1].split(':')[0]
+
+    @property
+    def moves(self):
+        if 'HISTORY' not in self._data:
+            return None
+        return sum(int(x.split(':')[1]) for x in self._data['HISTORY'].split(','))
 
     @property
     def score(self):
         if 'SCORE' not in self._data:
-            raise InvalidSolutionError
+            return None
         score = self._data['SCORE']
         try:
             score = float(score)
         except ValueError:
-            raise InvalidSolutionError
+            return None
         return score
 
     def to_model_object(self, name):
