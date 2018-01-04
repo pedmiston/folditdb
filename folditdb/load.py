@@ -43,5 +43,5 @@ def load_solutions_from_file(solutions_file, session=None):
         try:
             load_solution(irdata, session)
         except Exception as e:
-            stderr.write(f'{solutions_file}, {i}, {e}')
+            stderr.write('{solutions_file}, {i}, {e}'.format(solutions_file=solutions_file, i=i, e=e))
             continue
