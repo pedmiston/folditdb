@@ -1,7 +1,12 @@
 import argparse
 from pathlib import Path
+import logging
 
 from folditdb.load import load_solutions
+
+logger = logging.getLogger(__name__)
+handler = logging.FileHandler('folditdb-errors.csv')
+logger.addHandler(handler)
 
 def main():
     parser = argparse.ArgumentParser('folditdb')
