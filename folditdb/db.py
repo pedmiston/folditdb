@@ -5,8 +5,9 @@ from sqlalchemy.orm import sessionmaker
 
 from folditdb.tables import Base
 
-# Initialize DB globally
-DB = create_engine(environ['MYSQL_FOLDIT_DB'])
+# Initialize DB engine globally
+# pool_pre_ping: Test connection before transacting
+DB = create_engine(environ['MYSQL_FOLDIT_DB'], pool_pre_ping=True)
 
 # Create a class that creates new sessions
 Session = sessionmaker()
