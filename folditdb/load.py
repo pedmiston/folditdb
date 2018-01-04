@@ -1,4 +1,4 @@
-from sqlalchemy.exc import IntegrityError
+from sys import stderr
 
 from folditdb.db import DB, Session
 from folditdb.tables import Base
@@ -38,16 +38,10 @@ def load_single_solution_from_file(solution_file, session=None):
 
 def load_solutions_from_file(solutions_file, session=None):
     for i, json_str in enumerate(open(solutions_file)):
-        print(f'Processing solution in row {i}')
-
-        try:
-            irdata = IRData.from_json(json_str)
-        except Exception as e:
-            print(f'Error creating IRData from row {i}: {e}')
-            continue
+        irdata = IRData.from_json(json_str)
 
         try:
             load_solution(irdata, session)
         except Exception as e:
-            print(f'Error loading solution from row {i}: {e}')
+            stderr.write(f'{solutions_file}, {i}, {e}')
             continue
