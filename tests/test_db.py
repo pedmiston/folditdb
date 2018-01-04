@@ -44,3 +44,10 @@ def test_load_solutions_from_file(session):
     load_solutions_from_file(solutions_file, session)
     results = session.query(Solution).all()
     assert len(results) == 2
+
+def test_load_solutions_skipping_malformed_ones_gracefully(session):
+    solutions_file = 'tests/test_data/malformed_solutions.json'
+    load_solutions_from_file(solutions_file, session)
+    solution = session.query(Solution).filter_by(id=1).first()
+    assert solution.history_id is None
+    assert solution.moves is None
