@@ -11,7 +11,7 @@ association_table = Table('association', Base.metadata,
 
 class Puzzle(Base):
     __tablename__ = 'puzzle'
-    id = Column(Integer, primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True)
     solutions = relationship('Solution')
 
     @classmethod
@@ -44,6 +44,21 @@ class Solution(Base):
         return cls(**data)
 
 
+class Team(Base):
+    __tablename__ = 'team'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(60))
+    players = relationship('Player')
+
+    @classmethod
+    def from_pdl(cls, pdl):
+        data = dict(
+            id=pdl.team_id,
+            name=pdl.team_name
+        )
+        return cls(**data)
+
+
 class Player(Base):
     __tablename__ = 'player'
     id = Column(Integer, primary_key=True)
@@ -56,19 +71,5 @@ class Player(Base):
             id=pdl.player_id,
             name=pdl.player_name,
             team_id=pdl.team_id
-        )
-        return cls(**data)
-
-class Team(Base):
-    __tablename__ = 'team'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(60))
-    players = relationship('Player')
-
-    @classmethod
-    def from_pdl(cls, pdl):
-        data = dict(
-            id=pdl.team_id,
-            name=pdl.team_name
         )
         return cls(**data)

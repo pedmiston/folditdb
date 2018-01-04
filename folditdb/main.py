@@ -11,5 +11,5 @@ def main():
     args = parser.parse_args()
     assert Path(args.solutions).exists(), 'solutions file does not exist'
 
-    Base.metdata.create_all(DB)
+    Base.metadata.create_all(DB)
     load_solutions_from_file(args.solutions)

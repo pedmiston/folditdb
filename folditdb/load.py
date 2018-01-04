@@ -37,6 +37,17 @@ def load_single_solution_from_file(solution_file, session=None):
     load_solution(irdata, session)
 
 def load_solutions_from_file(solutions_file, session=None):
-    for json_str in open(solutions_file):
-        irdata = IRData.from_json(json_str)
-        load_solution(irdata, session)
+    for i, json_str in enumerate(open(solutions_file)):
+        print(f'Processing solution in row {i}')
+
+        try:
+            irdata = IRData.from_json(json_str)
+        except Exception as e:
+            print(f'Error creating IRData from row {i}: {e}')
+            continue
+
+        try:
+            load_solution(irdata, session)
+        except Exception as e:
+            print(f'Error loading solution from row {i}: {e}')
+            continue
