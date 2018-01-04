@@ -62,6 +62,12 @@ class IRData:
         return self._data['HISTORY'].split(',')[-1].split(':')[0]
 
     @property
+    def moves(self):
+        if 'HISTORY' not in self._data:
+            raise InvalidSolutionError
+        return sum(int(x.split(':')[1]) for x in self._data['HISTORY'].split(','))
+
+    @property
     def score(self):
         if 'SCORE' not in self._data:
             raise InvalidSolutionError

@@ -11,6 +11,7 @@ def test_load_solution_in_db(irdata, session):
     solution = results.first()
     assert solution.id == 1
     assert solution.score == 134.2
+    assert solution.moves == 19
 
     results = session.query(Player)
     assert len(results.all()) == 1
@@ -21,6 +22,10 @@ def test_load_solution_in_db(irdata, session):
     assert len(player.solutions) == 1
     assert solution in player.solutions
 
+def test_load_solution_is_idempotent(irdata, session):
+    load_solution(irdata, session)
+    load_solution(irdata, session)
+    assert len(session.query(Solution).all()) == 1
 
 def test_load_irdata_with_multiple_players_in_db(irdata_with_multiple_players,
         session):

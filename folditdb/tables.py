@@ -27,6 +27,7 @@ class Solution(Base):
     id = Column(Integer, primary_key=True)
     puzzle_id = Column(Integer, ForeignKey('puzzle.id'))
     history_id = Column(String(60))
+    moves = Column(Integer)
     score = Column(Float)
     players = relationship('Player', secondary=association_table,
                            backref='solutions')
@@ -37,6 +38,7 @@ class Solution(Base):
             id=irdata.solution_id,
             puzzle_id=irdata.puzzle_id,
             history_id=irdata.history_id,
+            moves=irdata.moves,
             score=irdata.score
         )
         return cls(**data)

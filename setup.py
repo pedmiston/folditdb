@@ -10,7 +10,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'folditdb=folditdb:main',
+            'folditdb=folditdb:main.main',
         ],
     },
 )
