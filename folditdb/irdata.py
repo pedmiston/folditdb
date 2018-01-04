@@ -84,10 +84,18 @@ class IRData:
         model = Model.from_irdata(self)
         return model
 
-    def pdl_strings(self):
-        pdls = self._data['PDL']
-        if not isinstance(pdls, list):
-            pdls = [pdls, ]
+    def pdls(self):
+        """Create a list of PDL objects from PDL strings in the IRData."""
+        # want, have
+        pdls, pdl_strings = [], self._data['PDL']
+
+        if not isinstance(pdl_strings, list):
+            pdl_strings = [pdl_strings, ]
+
+        for pdl_string in pdl_strings:
+            pdl = PDL(pdl_string)
+            pdls.append(pdl)
+
         return pdls
 
 

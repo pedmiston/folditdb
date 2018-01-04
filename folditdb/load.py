@@ -5,15 +5,17 @@ def load_solution(irdata, session=None):
     if local_session:
         session = Session()
 
-    solution = irdata.to_model_object('Solution')
+    # Create model objects from the IRData
     puzzle = irdata.to_model_object('Puzzle')
+    solution = irdata.to_model_object('Solution')
 
+    # Merge the new objects in the current session.
+    # Order matters because the solutions table has a ForeignKey
+    # to the puzzles table.
     puzzle = session.merge(puzzle)
     solution = session.merge(solution)
 
-    for pdl_str in irdata.pdl_strings():
-        pdl = PDL(pdl_str)
-
+    for pdl in irdata.pdls():
         team = pdl.to_model_object('Team')
         team = session.merge(team)
 

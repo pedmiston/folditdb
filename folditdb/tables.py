@@ -4,10 +4,14 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-association_table = Table('association', Base.metadata,
+# Define association table for Many-to-Many relationship
+# between solutions and players.
+# A player has many solutions, and a solution may be submitted by multiple
+# players.
+solutions_and_players = Table('solutions_and_players', Base.metadata,
     Column('solution_id', Integer, ForeignKey('solution.id')),
-    Column('player_id', Integer, ForeignKey('player.id'))
-)
+    Column('player_id', Integer, ForeignKey('player.id')))
+
 
 class Puzzle(Base):
     __tablename__ = 'puzzle'
@@ -30,7 +34,7 @@ class Solution(Base):
     moves = Column(Integer)
     score = Column(Float)
     filename = Column(Text)
-    players = relationship('Player', secondary=association_table,
+    players = relationship('Player', secondary=solutions_and_players,
                            backref='solutions')
 
     @classmethod
