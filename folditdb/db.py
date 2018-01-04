@@ -13,4 +13,4 @@ Session = sessionmaker()
 Session.configure(bind=DB)
 
 # Create tables that do not exist yet
-#Base.metadata.create_all(DB)
+Base.metadata.create_all(DB)
