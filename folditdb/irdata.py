@@ -45,7 +45,7 @@ class IRData:
 
     @property
     def filename(self):
-        return self._data['FILEPATH']
+        return self._data.get('FILEPATH')
 
     @property
     def solution_id(self):

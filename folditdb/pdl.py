@@ -10,6 +10,9 @@ class PDL:
             team_id=int(fields[3])
         )
 
+        team_type = 'soloist' if self._data['team_name'] == '[no group]' else 'evolver'
+        self._data['team_type'] = team_type
+
     def __getattr__(self, key):
         return self._data[key]
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, String, Float, Integer, ForeignKey
+from sqlalchemy import Table, Column, String, Float, Integer, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -29,6 +29,7 @@ class Solution(Base):
     history_id = Column(String(60))
     moves = Column(Integer)
     score = Column(Float)
+    filename = Column(Text)
     players = relationship('Player', secondary=association_table,
                            backref='solutions')
 
@@ -39,22 +40,25 @@ class Solution(Base):
             puzzle_id=irdata.puzzle_id,
             history_id=irdata.history_id,
             moves=irdata.moves,
-            score=irdata.score
+            score=irdata.score,
+            filename=irdata.filename
         )
         return cls(**data)
 
 
 class Team(Base):
     __tablename__ = 'team'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=False)
     name = Column(String(60))
+    team_type = Column(String(20))
     players = relationship('Player')
 
     @classmethod
     def from_pdl(cls, pdl):
         data = dict(
             id=pdl.team_id,
-            name=pdl.team_name
+            name=pdl.team_name,
+            team_type=pdl.team_type,
         )
         return cls(**data)
 

@@ -45,6 +45,12 @@ def test_load_solutions_from_file(session):
     results = session.query(Solution).all()
     assert len(results) == 2
 
+def test_load_soloist_solution_from_file(session):
+    solution_file = 'tests/test_data/soloist_solution.json'
+    load_single_solution_from_file(solution_file, session)
+    solution = session.query(Solution).first()
+    assert solution.id == 356818458
+
 def test_load_solutions_skipping_malformed_ones_gracefully(session):
     solutions_file = 'tests/test_data/malformed_solutions.json'
     load_solutions_from_file(solutions_file, session)
