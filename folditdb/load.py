@@ -1,5 +1,3 @@
-from sqlalchemy.exc import IntegrityError
-
 from folditdb.irdata import IRData
 from folditdb.pdl import PDL
 
