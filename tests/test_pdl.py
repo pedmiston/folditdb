@@ -1,5 +1,4 @@
-from folditdb.irdata import IRData
-from folditdb.pdl import PDL
+from folditdb.irdata import IRData, PDL
 
 def test_create_player_object(irdata):
     pdl = PDL(irdata.pdl_strings()[0])

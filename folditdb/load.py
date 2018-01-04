@@ -1,4 +1,4 @@
-from folditdb.pdl import PDL
+from folditdb.irdata import PDL
 
 def load_solution(irdata, session=None):
     local_session = (session is None)
