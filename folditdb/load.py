@@ -1,5 +1,6 @@
 import logging
 from folditdb.irdata import IRData, PDL
+from folditdb.db import Session
 
 logger = logging.getLogger('folditdb')
 
