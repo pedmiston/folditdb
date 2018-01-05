@@ -3,7 +3,7 @@ import logging
 
 from folditdb import tables
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('folditdb')
 
 class IRDataCreationError(Exception):
     pass
@@ -47,7 +47,7 @@ class IRData:
         try:
             data = json.loads(json_str)
         except json.JSONDecodeError as err:
-            raise IRDataCreationError('bad JSON: {e}'.format(e=err))
+            raise IRDataCreationError('bad JSON')
         return cls(data)
 
     @classmethod
@@ -78,8 +78,8 @@ class IRData:
         elif '/all/' in self.filename:
             self._solution_type = 'regular'
         else:
-            msg = 'IRData property error: solution type from {}'
-            logger.info(msg.format(self.filename))
+            msg = 'IRData property error: solution type from filename="%s'
+            logger.info(msg, self.filename)
             self._solution_type = None
 
         return self._solution_type
@@ -89,9 +89,20 @@ class IRData:
         if hasattr(self, '_solution_id'):
             return self._solution_id
 
-        error_msg = 'IRData property error: coverting SID to int'
-        self._solution_id = self.verify_int(self._data.get('SID'),
-                                            error_msg=error_msg)
+        # want, have
+        self._solution_id, sid_str = None, self._data.get('SID')
+
+        if sid_str is None:
+            msg = 'IRData property error: no solution id, filename="%s"'
+            logger.info(msg, self.filename)
+            return self._solution_id
+
+        try:
+            self._solution_id = int(sid_str)
+        except ValueError:
+            msg = 'IRData property error: SID is not an int: SID="%s"'
+            logger.info(msg, sid_str, self.filename)
+
         return self._solution_id
 
     @property
@@ -99,9 +110,20 @@ class IRData:
         if hasattr(self, '_puzzle_id'):
             return self._puzzle_id
 
-        error_msg = 'IRData property error: converting PID to int'
-        self._puzzle_id = self.verify_int(self._data.get('PID'),
-                                          error_msg=error_msg)
+        # want, have
+        self._puzzle_id, pid_str = (None, self._data.get('PID'))
+
+        if pid_str is None:
+            msg = 'IRData property error: no puzzle id: filename="%s"'
+            logger.info(msg, self.filename)
+            return self._puzzle_id
+
+        try:
+            self._puzzle_id = int(pid_str)
+        except ValueError:
+            msg = 'IRData property error: PID is not an int: PID="%s"'
+            logger.info(msg, pid_str, self.filename)
+
         return self._puzzle_id
 
     @property
@@ -109,21 +131,22 @@ class IRData:
         if hasattr(self, '_history_id'):
             return self._history_id
 
-        history_string = self._data.get('HISTORY')
+        # want, have
+        self._history_id, history_string = (None, self._data.get('HISTORY'))
+
         if history_string is None:
-            msg = 'IRData property error: solution has no history: filename={}'
-            logger.info(msg.format(self.filename))
-            return None
+            msg = 'IRData property error: solution has no history: filename="%s"'
+            logger.info(msg, self.filename)
+            return self._history_id
 
         # does not fail if history_string is a string
         last_move_in_history = history_string.split(',')[-1]
         try:
-            history_id, _ = last_move_in_history.split(':')
+            self._history_id, _ = last_move_in_history.split(':')
         except ValueError:
-            msg = 'IRData property error: unable to process history string: {}'
-            logger.info(msg.format(history_string))
+            msg = 'IRData property error: unable to process history string: history_string="%s"'
+            logger.info(msg, history_string)
 
-        self._history_id = history_id
         return self._history_id
 
     @property
@@ -131,8 +154,9 @@ class IRData:
         if hasattr(self, '_moves'):
             return self._moves
 
+        self._moves = None
+
         if self.history_id is None:
-            self._moves = None
             return self._moves
 
         history_string = self._data.get('HISTORY')
@@ -140,9 +164,8 @@ class IRData:
             moves = [int(pair.split(':')[1])
                      for pair in history_string.split(',')]
         except (IndexError, ValueError, TypeError):
-            msg = 'IRData property error: unable to parse moves from history string: {}'
-            logger.info(msg.format(history_string))
-            self._moves = None
+            msg = 'IRData property error: unable to parse moves from history string: history_string="%s"'
+            logger.info(msg, history_string)
         else:
             self._moves = sum(moves)
 
@@ -153,21 +176,21 @@ class IRData:
         if hasattr(self, '_score'):
             return self._score
 
-        score_str = self._data.get('SCORE')
+        # want, have
+        self._score, score_str = None, self._data.get('SCORE')
+
         if score_str is None:
-            logger.info('IRData property error: missing score')
-            self._score = None
+            msg = 'IRData property error: missing score: filename="%s"'
+            logger.info(msg, self.filename)
             return self._score
 
         try:
             self._score = float(score_str)
         except ValueError:
-            msg = 'IRData property error: converting score_str to float: score_str="{}""'
-            logger.info(msg.format(score_str))
-            self._score = None
+            msg = 'IRData property error: SCORE is not a float: score_str="%s"'
+            logger.info(msg, score_str)
 
         return self._score
-
 
     def to_model_object(self, name):
         """Create a model object."""
@@ -187,21 +210,12 @@ class IRData:
             try:
                 pdl = PDL(pdl_string)
             except PDLCreationError as err:
-                msg = 'error creating PDL from string="{}": {}'
-                logging.info(msg.format(pdl_string, err))
+                msg = 'PDL creation error: %s'
+                logging.info(msg, err)
             else:
                 pdls.append(pdl)
 
         return pdls
-
-    def verify_int(self, arg, error_msg):
-        try:
-            arg_int = int(arg)
-        except (ValueError, TypeError):
-            logger.info('{error_msg}: {arg}'.format(error_msg=error_msg, arg=arg))
-            return None
-        else:
-            return arg_int
 
 
 class PDL:
@@ -209,16 +223,16 @@ class PDL:
         if pdl_str.startswith('. '):
             pdl_str = pdl_str.strip('^. ')
         else:
-            msg = 'PDL string does not look right: {}'
-            raise PDLCreationError(msg.format(pdl_str))
+            msg = 'invalid PDL string: pdl_str="%s"'
+            raise PDLCreationError(msg % pdl_str)
 
         fields = pdl_str.split(',')
         player_name, team_name = fields[:2]
         try:
             player_id, team_id = map(int, fields[2:4])
         except ValueError:
-            msg = 'unable to convert player_id and team_id to ints'
-            raise PDLCreationError(msg)
+            msg = 'unable to convert player_id and team_id to ints, pdl_str="%s"'
+            raise PDLCreationError(msg % pdl_str)
 
         self._data = dict(
             player_name=player_name,

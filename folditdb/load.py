@@ -1,7 +1,7 @@
 import logging
 from folditdb.irdata import IRData, PDL
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('folditdb')
 
 
 def load_solution(irdata, session=None):

@@ -1,10 +1,12 @@
-from os import environ
+import logging
+from os import environ, remove
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import pytest
 
+from folditdb import log
 from folditdb.tables import Base
 from folditdb.irdata import IRData
 
