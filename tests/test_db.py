@@ -1,5 +1,4 @@
-from folditdb.irdata import IRData
-from folditdb.pdl import PDL
+from folditdb.irdata import IRData, PDL
 from folditdb.tables import Solution, Player
 from folditdb.load import load_solution, load_single_solution_from_file, load_solutions_from_file
 
