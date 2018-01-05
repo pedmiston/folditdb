@@ -1,4 +1,8 @@
+import logging
 from folditdb.irdata import IRData, PDL
+
+logger = logging.getLogger(__name__)
+
 
 def load_solution(irdata, session=None):
     local_session = (session is None)
