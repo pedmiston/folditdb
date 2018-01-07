@@ -1,64 +1,68 @@
 import logging
+
 from folditdb.irdata import IRData, PDL
 from folditdb.db import Session
+from folditdb.tables import Solution, Puzzle, Team, Player, History
 
-logger = logging.getLogger('folditdb')
+logger = logging.getLogger(__name__)
 
+class DuplicateIRDataException(Exception):
+    pass
 
-def load_solution(irdata, session=None):
+def load_from_irdata(irdata, session=None):
     local_session = (session is None)
     if local_session:
         session = Session()
 
-    # Create model objects from the IRData
-    puzzle = irdata.to_model_object('Puzzle')
-    solution = irdata.to_model_object('Solution')
+    results = session.query(Solution).filter_by(id=irdata.solution_id).all()
+    if len(results) > 0:
+        raise DuplicateIRDataException
 
-    try:
-        # Merge the new objects in the current session.
-        # Order matters because the solutions table has a ForeignKey
-        # to the puzzles table.
-        puzzle = session.merge(puzzle)
-        solution = session.merge(solution)
+    # Create model objects from IRData
+    puzzle = Puzzle.from_irdata(irdata)
+    puzzle = session.merge(puzzle)
 
-        for pdl in irdata.pdls():
-            team = pdl.to_model_object('Team')
-            player = pdl.to_model_object('Player')
+    # Create a history object for the last history id in this solution.
+    # History objects for all history ids in this solution's history string
+    # are highly redundant across solutions, and therefore should not
+    # be created for all solutions. Instead, history objects will only
+    # be made for top ranked solutions.
+    last_history = History(id=irdata.history_id)
+    session.add(last_history)
 
-            try:
-                with session.begin_nested():
-                    team = session.merge(team)
-            except Exception as err:
-                logging.info('DB error: merging team: {err}'.format(err))
-                continue
+    solution = Solution.from_irdata(irdata)
+    session.add(solution)
 
-            try:
-                with session.begin_nested():
-                    player = session.merge(player)
-            except Exception as err:
-                logging.info('DB error: merging player: {err}'.format(err))
-                continue
+    # Cannot assume one player per solution because
+    # some solutions are contributed by more than one player.
+    for pdl in irdata.pdls():
+        team = Team.from_pdl(pdl)
+        player = Player.from_pdl(pdl)
 
-            player.solutions.append(solution)
+        session.merge(team)
+        player = session.merge(player)
+        player.solutions.append(solution)
 
-        session.commit()
-    except Exception as err:
-        logging.info('Unexpected DB error: {}'.format(err))
-        session.rollback()
-    finally:
-        if local_session:
-            session.close()
+    # if irdata.solution_type == 'top' and irdata.history_string:
+    #     for history_id in irdata.histories():
+    #         history = History(id=history_id, solution_id=solution.id)
+    #         session.add(history)
 
-def load_single_solution_from_file(solution_file, session=None):
+    session.commit()
+
+    if local_session:
+        session.close()
+
+def load_single_irdata_file(solution_file, session=None):
     irdata = IRData.from_file(solution_file)
-    load_solution(irdata, session)
+    load_from_irdata(irdata, session)
 
-def load_solutions_from_file(solutions_file, session=None):
-    for i, json_str in enumerate(open(solutions_file)):
-        irdata = IRData.from_json(json_str)
+def load_irdata_from_file(solutions_file, session=None):
+    local_session = (session is None)
+    if local_session:
+        session = Session()
 
-        try:
-            load_solution(irdata, session)
-        except Exception as e:
-            logger.info('Loading error: {}'.format(e))
-            continue
+    for irdata in IRData.from_scrape_file(solutions_file):
+        load_from_irdata(irdata, session)
+
+    session.close()

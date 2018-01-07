@@ -1,8 +1,9 @@
+from folditdb import tables
 from folditdb.irdata import IRData, PDL
 
 def test_create_player_object(irdata):
     pdl = irdata.pdls()[0]
-    player = pdl.to_model_object('Player')
+    player = tables.Player.from_pdl(pdl)
     assert player.id == 100
     assert player.name == "bill"
     assert player.team_id == 200
