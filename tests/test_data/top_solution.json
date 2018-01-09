@@ -1,0 +1,9 @@
+{
+  "FILEPATH": "/home/pierce/fetch/solution_998245/top/solution_uid_0023_0000482875_0000991825_0181034178.ir_solution.pdb",
+  "PDL": ". Skippysk8s,Gargleblasters,502210,991825,20140707-373183ff75-win_x86,-103.409325,1,-103.409325 LOG:  Pull_Mode|ACTIVATE=3 Selection_Interface|BringUpTweakWidget=5 Structure_Mode|ACTIVATE=3 |=8 |ActionBandAddAtomAtom=292 |ActionBandAddResRes=55 |ActionBandDelete=265 |ActionBandDisableToggle=4 |ActionBandLength=22 |ActionBandStrength=261 |ActionButtonBridge=8 |ActionDeleteCut=407 |ActionGlobalMinimize=7234 |ActionGlobalMinimizeBackbone=3792 |ActionGlobalMinimizeSidechains=4066 |ActionIdealize=155 |ActionInsertCut=407 |ActionLocalMinimize=11896 |ActionLockToggle=1139 |ActionNoviceQuicksave=2912 |ActionNoviceResetRecentBest=316 |ActionNoviceSecstructLoad=44 |ActionNoviceSecstructSave=38 |ActionRebuild=780 |ActionRepack=4997 |ActionSecStructAssignHelix=2 |ActionSecStructAssignLoop=39 |ActionSecStructAssignMenu=5 |ActionSecStructAssignSheet=1 |ActionSecStructDrag=14 |MacroAction=4 |MacroGUIBO103981=4 |MacroGUIEO103981=2 |MacroScrBO10043=2 |MacroScrBO103814=5 |MacroScrBO104841=1 |MacroScrBO105848=1 |MacroScrBO105889=1 |MacroScrBO105926=1 |MacroScrBO14100=2 |MacroScrBO23215=1 |MacroScrBO30537=1 |MacroScrBO32973=1 |MacroScrBO409=1 |MacroScrBO64233=1 |MacroScrEO10043=1 |MacroScrEO103814=4 |MacroScrEO104841=1 |MacroScrEO105848=1 |MacroScrEO105889=1 |MacroScrEO105926=1 |MacroScrEO14100=2 |MacroScrEO409=1 |MacroScriptRunnerAction=18 |ToolActionSequence=22 |ToolBridgeAction=27",
+  "PID": "998245",
+  "SCORE": "9034.873",
+  "SID": "181034178",
+  "TIMESTAMP": "1407275706",
+  "HISTORY":"V0:0,V1:10,V2:5,V3:6"
+}

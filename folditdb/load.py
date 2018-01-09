@@ -42,7 +42,9 @@ def load_from_irdata(irdata, session=None):
         player.solutions.append(solution)
 
     if irdata.solution_type == 'top':
-        session.add_all(History.from_irdata(irdata))
+        # Load all histories but the last one (which has already been added)
+        for history in History.from_irdata(irdata)[:-1]:
+            session.merge(history)
 
     session.commit()
 
