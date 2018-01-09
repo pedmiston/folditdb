@@ -14,6 +14,7 @@ def tmp_log():
     yield tmp_log_filepath
     remove(tmp_log_filepath)
 
+@pytest.mark.skip
 def test_logger_records_irdata_property_error(tmp_log):
     irdata = IRData.from_file('tests/test_data/solution_without_history.json')
     tables.Solution.from_irdata(irdata)  # should print error to log file
@@ -21,6 +22,7 @@ def test_logger_records_irdata_property_error(tmp_log):
     expected_error_msg = 'IRData property error: solution has no history'
     assert expected_error_msg in error_log
 
+@pytest.mark.skip
 def test_logger_records_irdata_property_error_only_once(tmp_log):
     irdata = IRData.from_file('tests/test_data/solution_without_history.json')
     tables.Solution.from_irdata(irdata)  # should print error to log file

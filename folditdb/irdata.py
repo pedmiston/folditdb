@@ -3,13 +3,17 @@ import logging
 
 from folditdb import tables
 
-logger = logging.getLogger(__name__)
-
 
 class IRDataCreationError(Exception):
     pass
 
+class IRDataPropertyError(Exception):
+    pass
+
 class PDLCreationError(Exception):
+    pass
+
+class PDLPropertyError(Exception):
     pass
 
 
@@ -19,11 +23,11 @@ class IRData:
     Each IRData object corresponds to the data contained in a single
     solution pdb file stored on the Foldit analytics server. The
     solution pdb files were scraped with the foldit-go program command
-    'scrape' and consist of all lines in the PDB file that start with
+    'scrape' and consist of all lines in the pdb file that start with
     "IRDATA".
 
-    IRData objects store their IRData as an internal dict, and expose
-    output values as properties on the object.
+    IRData objects store data internally as a dict, and expose
+    output values used to create model objects as properties.
 
     > json_str = '{"FILEPATH": "/location/of/solution.pdb"}'
     > irdata = IRData.from_json(json_str)
@@ -37,42 +41,43 @@ class IRData:
     > irdata = IRData.from_json(json_str)
     > irdata.history_id == 'V3'
 
+    Properties such as history_id in the above example are computed
+    once and cached. If a property cannot be computed, an IRDataPropertyError
+    is raised, and an error is printed to the module logger.
+
     The reason for using IRData objects is to facilitate the translation
     of the same json data into multiple model objects without redundantly
     processing the same data.
 
-    > from folditdb import tables
-    > irdata = IRData.from_file('solution.json')
-    > puzzle = tables.Puzzle.from_irdata(irdata)
-    > solution = tables.Solution.from_irdata(irdata)
-
-    A few notes about IRData object properties:
-    - Properties are computed once and cached.
-    - Properties return None if they cannot be computed.
-    - If a property cannot be computed, an error is printed to the module logger.
+    > from folditdb.tables import Puzzle, Solution
+    > irdata   = IRData.from_file('solution.json')
+    > puzzle   = Puzzle.from_irdata(irdata)
+    > solution = Solution.from_irdata(irdata)
     """
     def __init__(self, data):
-        """Create an IRData object from a dict of IRData strings."""
+        """Create an IRData object from a dict of strings."""
         self._data = data
         self._cache = {}
 
     @classmethod
     def from_json(cls, json_str):
+        """Create an IRData object from a json string."""
         try:
             data = json.loads(json_str)
         except json.JSONDecodeError as err:
-            raise IRDataCreationError('bad JSON')
+            raise IRDataCreationError('bad JSON: %s' % err)
         return cls(data)
 
     @classmethod
     def from_file(cls, json_filepath):
+        """Create an IRData object from a json file."""
         with open(json_filepath) as json_file:
             json_str = json_file.read()
             return cls.from_json(json_str)
 
     @classmethod
     def from_scrape_file(cls, scrape_filepath):
-        """Yield IRData objects for each line of json in a scrape file.
+        """Create IRData objects for each line of json in a scrape file.
 
         A scrape file is the output of the foldit-go command 'scrape'.
         """
@@ -80,16 +85,20 @@ class IRData:
             for json_str in scrape_file:
                 yield cls.from_json(json_str)
 
-    # Begin defining IRData properties -------------------------------------------
+    # Begin defining IRData properties -----------------------------------------
 
     @property
     def filename(self):
+        """The full filename for the pdb solution file.
+
+        Filenames contain information about ranking for top solutions.
+        """
         if 'filename' in self._cache:
             return self._cache['filename']
 
         filename = self._data.get('FILEPATH')
         if filename is None:
-            logger.info('IRData property error: solution has no filepath')
+            raise IRDataPropertyError('IRData property error: solution has no FILEPATH')
 
         return self._cache.setdefault('filename', filename)
 
@@ -99,16 +108,13 @@ class IRData:
         if 'solution_type' in self._cache:
             return self._cache['solution_type']
 
-        if self.filename is None:
-            solution_type = None
-        elif '/top/' in self.filename:
+        if '/top/' in self.filename:
             solution_type = 'top'
         elif '/all/' in self.filename:
             solution_type = 'regular'
         else:
             msg = 'IRData property error: solution type from filename="%s'
-            logger.info(msg, self.filename)
-            solution_type = None
+            raise IRDataPropertyError(msg % self.filename)
 
         return self._cache.setdefault('solution_type', solution_type)
 
@@ -117,18 +123,16 @@ class IRData:
         if 'solution_id' in self._cache:
             return self._cache['solution_id']
 
-        # want, have
-        solution_id, sid_str = None, self._data.get('SID')
-
-        if sid_str is not None:
-            try:
-                solution_id = int(sid_str)
-            except ValueError:
-                msg = 'IRData property error: SID is not an int: SID="%s"'
-                logger.info(msg, sid_str, self.filename)
-        else:
+        sid_str = self._data.get('SID')
+        if sid_str is None:
             msg = 'IRData property error: no solution id, filename="%s"'
-            logger.info(msg, self.filename)
+            raise IRDataPropertyError(msg % self.filename)
+
+        try:
+            solution_id = int(sid_str)
+        except ValueError:
+            msg = 'IRData property error: SID is not an int: SID="%s"'
+            raise IRDataPropertyError(msg % sid_str)
 
         return self._cache.setdefault('solution_id', solution_id)
 
@@ -137,18 +141,16 @@ class IRData:
         if 'puzzle_id' in self._cache:
             return self._cache['puzzle_id']
 
-        # want, have
-        puzzle_id, pid_str = (None, self._data.get('PID'))
-
-        if pid_str is not None:
-            try:
-                puzzle_id = int(pid_str)
-            except ValueError:
-                msg = 'IRData property error: PID is not an int: PID="%s"'
-                logger.info(msg, pid_str, self.filename)
-        else:
+        pid_str = self._data.get('PID')
+        if pid_str is None:
             msg = 'IRData property error: no puzzle id: filename="%s"'
-            logger.info(msg, self.filename)
+            raise IRDataPropertyError(msg % self.filename)
+
+        try:
+            puzzle_id = int(pid_str)
+        except ValueError:
+            msg = 'IRData property error: PID is not an int: PID="%s"'
+            raise IRDataPropertyError(msg % pid_str)
 
         return self._cache.setdefault('puzzle_id', puzzle_id)
 
@@ -160,7 +162,7 @@ class IRData:
         history_string = self._data.get('HISTORY')
         if history_string is None:
             msg = 'IRData property error: solution has no history: filename="%s"'
-            logger.info(msg, self.filename)
+            raise IRDataPropertyError(msg % self.filename)
 
         return self._cache.setdefault('history_string', history_string)
 
@@ -169,16 +171,13 @@ class IRData:
         if 'history_id' in self._cache:
             return self._cache['history_id']
 
-        history_id = None
-
-        if self.history_string is not None:
-            # does not fail if history_string is a string
-            last_move_in_history = self.history_string.split(',')[-1]
-            try:
-                history_id, _ = last_move_in_history.split(':')
-            except ValueError:
-                msg = 'IRData property error: unable to process history string: history_string="%s"'
-                logger.info(msg, self.history_string)
+        # Does not fail if history_string is a string
+        last_move_in_history = self.history_string.split(',')[-1]
+        try:
+            history_id, _ = last_move_in_history.split(':')
+        except ValueError:
+            msg = 'IRData property error: unable to process history string: history_string="%s"'
+            raise IRDataPropertyError(msg % self.history_string)
 
         return self._cache.setdefault('history_id', history_id)
 
@@ -187,16 +186,14 @@ class IRData:
         if 'total_moves' in self._cache:
             return self._cache['total_moves']
 
-        total_moves = None
-        if self.history_string is not None:
-            try:
-                moves = [int(pair.split(':')[1])
-                         for pair in self.history_string.split(',')]
-            except (IndexError, ValueError, TypeError):
-                msg = 'IRData property error: unable to parse moves from history string: history_string="%s"'
-                logger.info(msg, self.history_string)
-            else:
-                total_moves = sum(moves)
+        try:
+            moves = [int(pair.split(':')[1])
+                     for pair in self.history_string.split(',')]
+        except (IndexError, ValueError, TypeError):
+            msg = 'IRData property error: unable to parse moves from history string: history_string="%s"'
+            raise IRDataPropertyError(msg % self.history_string)
+        else:
+            total_moves = sum(moves)
 
         return self._cache.setdefault('total_moves', total_moves)
 
@@ -205,43 +202,42 @@ class IRData:
         if 'score' in self._cache:
             return self._cache['score']
 
-        # want, have
-        score, score_str = None, self._data.get('SCORE')
-
-        if score_str is not None:
-            try:
-                score = float(score_str)
-            except ValueError:
-                msg = 'IRData property error: SCORE is not a float: score_str="%s"'
-                logger.info(msg, score_str)
-        else:
+        score_str = self._data.get('SCORE')
+        if score_str is None:
             msg = 'IRData property error: missing score: filename="%s"'
-            logger.info(msg, self.filename)
+            raise IRDataPropertyError(msg % self.filename)
+
+        try:
+            score = float(score_str)
+        except ValueError:
+            msg = 'IRData property error: SCORE is not a float: score_str="%s"'
+            raise IRDataPropertyError(msg % score_str)
 
         return self._cache.setdefault('score', score)
 
-    def pdls(self):
-        if 'pdls' in self._cache:
-            return self._cache['pdls']
-
-        pdls = PDL.from_irdata(self)
-        return self._cache.setdefault('pdls', pdls)
-
-    def histories(self):
-        if 'histories' in self._cache:
-            return self._cache['histories']
-
-        histories = History.from_irdata(self)
-        return self._cache.setdefault('histories', histories)
-
 
 class PDL:
-    def __init__(self, data):
-        self._data = data
+    """PDL objects contain data for the people contributing a solution.
+
+    PDL objects are derivatives of IRData objects. PDL objects are
+    separate from IRData objects because each IRData object may
+    have one or more PDLs associated with it.
+
+    PDL data is used to create model objects for players and teams, as well as
+    for the action log of moves made by each player.
+    """
+    def __init__(self, pdl_data, irdata):
+        self._pdl_data = pdl_data
+        self._irdata = irdata
 
     @classmethod
     def from_irdata(cls, irdata):
+        """Create PDL instances for each PDL string in an IRData object."""
         pdl_strings = irdata._data.get('PDL')
+
+        if pdl_strings is None:
+            msg = 'IRData object has no PDL strings, filename="%s"'
+            raise PDLCreationError(msg % self.filename)
 
         if not isinstance(pdl_strings, list):
             pdl_strings = [pdl_strings, ]
@@ -261,27 +257,32 @@ class PDL:
 
         fields = pdl_str.split(',')
         player_name, team_name = fields[:2]
+
+        # Assign each soloist to their own team name
+        if team_name == '[no group]':
+            team_name = '%s-%s' % (team_name, player_name)
+
         try:
             player_id, team_id = map(int, fields[2:4])
         except ValueError:
             msg = 'unable to convert player_id and team_id to ints, pdl_str="%s"'
             raise PDLCreationError(msg % pdl_str)
 
-        data = dict(
+        pdl_data = dict(
             player_name=player_name,
             team_name=team_name,
             player_id=player_id,
             team_id=team_id
         )
-        return cls(data)
+        return cls(pdl_data, irdata)
 
     @property
     def team_type(self):
-        if self._data['team_name'] == '[no group]':
+        if self._pdl_data['team_name'] == '[no group]':
             team_type = 'soloist'
         else:
             team_type = 'evolver'
         return team_type
 
     def __getattr__(self, key):
-        return self._data[key]
+        return self._pdl_data[key]

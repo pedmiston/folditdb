@@ -1,6 +1,8 @@
 import logging
 
-from folditdb.irdata import IRData, PDL
+from sqlalchemy import exists
+
+from folditdb.irdata import IRData, PDL, IRDataPropertyError
 from folditdb.db import Session
 from folditdb.tables import Solution, Puzzle, Team, Player, History
 
@@ -14,28 +16,24 @@ def load_from_irdata(irdata, session=None):
     if local_session:
         session = Session()
 
-    results = session.query(Solution).filter_by(id=irdata.solution_id).all()
-    if len(results) > 0:
+    # Create model objects from IRData
+    solution = Solution.from_irdata(irdata)
+    puzzle = Puzzle.from_irdata(irdata)
+    last_history = History.last_from_irdata(irdata)
+
+    # Check if this solution has already been loaded
+    solution_exists = session.query(exists().where(Solution.id == solution.id)).scalar()
+    if solution_exists:
         raise DuplicateIRDataException
 
-    # Create model objects from IRData
-    puzzle = Puzzle.from_irdata(irdata)
+    # Add model objects to the current session
+    # Order matters!
     puzzle = session.merge(puzzle)
-
-    # Create a history object for the last history id in this solution.
-    # History objects for all history ids in this solution's history string
-    # are highly redundant across solutions, and therefore should not
-    # be created for all solutions. Instead, history objects will only
-    # be made for top ranked solutions.
-    last_history = History(id=irdata.history_id)
     session.add(last_history)
-
-    solution = Solution.from_irdata(irdata)
     session.add(solution)
 
-    # Cannot assume one player per solution because
-    # some solutions are contributed by more than one player.
-    for pdl in irdata.pdls():
+    pdls = PDL.from_irdata(irdata)
+    for pdl in pdls:
         team = Team.from_pdl(pdl)
         player = Player.from_pdl(pdl)
 
@@ -43,10 +41,8 @@ def load_from_irdata(irdata, session=None):
         player = session.merge(player)
         player.solutions.append(solution)
 
-    # if irdata.solution_type == 'top' and irdata.history_string:
-    #     for history_id in irdata.histories():
-    #         history = History(id=history_id, solution_id=solution.id)
-    #         session.add(history)
+    if irdata.solution_type == 'top':
+        session.add_all(History.from_irdata(irdata))
 
     session.commit()
 

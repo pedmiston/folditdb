@@ -17,6 +17,7 @@ _solution_data = dict(
     HISTORY='V0:0,V1:10,V2:5,V3:4',
     SCORE='134.2',
     PDL='. bill,myteam,100,200',
+    FILEPATH="/all/solution.pdb",
 )
 
 _solution_data_with_multiple_players = dict(
@@ -28,6 +29,7 @@ _solution_data_with_multiple_players = dict(
         '. bill,myteam,100,200',
         '. jim,myteam,101,200',
     ],
+    FILEPATH="/all/solution.pdb",
 )
 
 

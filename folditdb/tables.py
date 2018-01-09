@@ -1,13 +1,13 @@
 """MySQL database table design.
 
-Note on the use of classmethods:
-Most of the table models have classmethods for creation.
+A note on the use of @classmethod:
+
+Most of the table models have class methods for creation.
 The reason for this is to provide alternate constructors
-for the common, but esoteric, ways of creating model
+for the most common but idiosyncratic ways of creating model
 objects. Placing the constructors on the models, rather
 than on the objects in folditdb.irdata, allows the
 constructor logic to be closest to the model descriptions.
-
 """
 from sqlalchemy import Table, Column, String, Float, Integer, ForeignKey, Text
 from sqlalchemy.orm import relationship
@@ -16,48 +16,14 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-class Puzzle(Base):
-    __tablename__ = 'puzzle'
-    id = Column(Integer, primary_key=True)
-    solutions = relationship('Solution')
-
-    @classmethod
-    def from_irdata(cls, irdata):
-        return cls(id=irdata.puzzle_id)
-
-solutions_and_players = Table('solutions_and_players', Base.metadata,
-    Column('solution_id', Integer, ForeignKey('solution.id')),
-    Column('player_id', Integer, ForeignKey('player.id')))
-# class PlayerSolutions(Base):
-#     """Association table for M2M relationship between players and solutions.
-#
-#     A player has many solutions, and a solution may be submitted by multiple
-#     players.
-#     """
-#     __tablename__ = 'player_solutions'
-#     player_id = Column(Integer, ForeignKey('player.id'))
-#     solution_id = Column(Integer, ForeignKey('solution.id'))
-
-
-class SolutionHistory(Base):
-    __tablename__ = 'solution_history'
-    id = Column(Integer, primary_key=True)
-    history_hash = Column(String(40))
-    history_string = Column(Text)
-
-
 class Solution(Base):
     __tablename__ = 'solution'
     id = Column(Integer, primary_key=True)
     puzzle_id = Column(Integer, ForeignKey('puzzle.id'))
     history_id = Column(String(40), ForeignKey('history.id'))
-    history_string_id = Column(Integer, ForeignKey('solution_history.id'))
+    solution_type = Column(String(20))
     total_moves = Column(Integer)
     score = Column(Float)
-    filename = Column(Text)  # filenames are really long...
-
-    players = relationship('Player', secondary='solutions_and_players',
-                           backref='solutions')
 
     @classmethod
     def from_irdata(cls, irdata):
@@ -65,70 +31,92 @@ class Solution(Base):
             id=irdata.solution_id,
             puzzle_id=irdata.puzzle_id,
             history_id=irdata.history_id,
+            solution_type=irdata.solution_type,
             total_moves=irdata.total_moves,
             score=irdata.score,
-            filename=irdata.filename
         )
         return cls(**data)
 
 
-# class Edit(Base):
-#     """An Edit is a change between solutions.
-#
-#     Edits are agnostic of their creator, because the ownership of some edits
-#     cannot be determined. This is because among teams, solutions with the
-#     same history of edits can be shared with other players within the team.
-#
-#     Each edit actually represents the number of edits between two points: a
-#     starting point and an ending point, with a number of moves between.
-#     """
-#     __tablename__ = 'edit'
-#     id = Column(Integer, primary_key=True)
-#     history_id = Column(Integer, ForeignKey('history.id'))
-#     prev_history_id = Column(Integer, ForeignKey('history.id'))
-#     moves = Column(Integer)
+class Puzzle(Base):
+    __tablename__ = 'puzzle'
+    id = Column(Integer, primary_key=True)
+
+    solutions = relationship('Solution')
+
+    @classmethod
+    def from_irdata(cls, irdata):
+        return cls(id=irdata.puzzle_id)
 
 
 class History(Base):
     __tablename__ = 'history'
     id = Column(String(40), primary_key=True)
+
     solutions = relationship('Solution')
+
+    @classmethod
+    def last_from_irdata(cls, irdata):
+        """Create a history object for the last history in the string."""
+        last_history_id = irdata.history_string.split(',')[-1].split(':')[0]
+        return cls(id=last_history_id)
 
     @classmethod
     def from_irdata(cls, irdata):
         """Create a list of History objects from a history string."""
-        history_ids = [x.split(':')[0] for x in history_string.split(',')]
+        history_ids = [x.split(':')[0] for x in irdata.history_string.split(',')]
         return [cls(id=history_id) for history_id in history_ids]
 
 
 class Team(Base):
+    """Teams are collections of one or more players.
+
+    Team types are evolver or soloists.
+
+    In the IRData, soloist players are represented with a team name of
+    '[no group]' and a team id == 0. This is a problem, as it in effect makes a
+    huge team of all soloist players. To get around this issue, single-player
+    teams are assigned to unique team names based on their player name. This
+    means the team id variable is no longer useful, and is not included in the
+    model.
+    """
     __tablename__ = 'team'
-    id = Column(Integer, primary_key=True, autoincrement=False)
-    name = Column(String(60))
+    name = Column(String(60), primary_key=True)
     team_type = Column(String(20))
+
     players = relationship('Player')
+    # puzzles = relationship('Puzzle')
 
     @classmethod
     def from_pdl(cls, pdl):
         data = dict(
-            id=pdl.team_id,
             name=pdl.team_name,
             team_type=pdl.team_type,
         )
         return cls(**data)
 
 
+player_solutions = Table('player_solutions', Base.metadata,
+    Column('player_id', Integer, ForeignKey('player.id')),
+    Column('solution_id', Integer, ForeignKey('solution.id'))
+)
+
 class Player(Base):
     __tablename__ = 'player'
     id = Column(Integer, primary_key=True)
     name = Column(String(60))
-    team_id = Column(Integer, ForeignKey('team.id'))
+    team_name = Column(String(60), ForeignKey('team.name'))
+
+    solutions = relationship('Solution',
+        secondary=player_solutions,
+        backref="players"
+    )
 
     @classmethod
     def from_pdl(cls, pdl):
         data = dict(
             id=pdl.player_id,
             name=pdl.player_name,
-            team_id=pdl.team_id
+            team_name=pdl.team_name
         )
         return cls(**data)
