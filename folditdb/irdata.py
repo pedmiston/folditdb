@@ -1,5 +1,6 @@
 import json
 import logging
+import hashlib
 
 from folditdb import tables
 
@@ -180,6 +181,14 @@ class IRData:
             raise IRDataPropertyError(msg % self.history_string)
 
         return self._cache.setdefault('history_id', history_id)
+
+    @property
+    def history_hash(self):
+        if 'history_hash' in self._cache:
+            return self._cache['history_hash']
+
+        history_hash = hashlib.sha256(self.history_string.encode('utf-8')).hexdigest()
+        return self._cache.setdefault('history_hash', history_hash)
 
     @property
     def total_moves(self):

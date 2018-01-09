@@ -4,7 +4,7 @@ from sqlalchemy import exists
 
 from folditdb.irdata import IRData, PDL, IRDataPropertyError
 from folditdb.db import Session
-from folditdb.tables import Solution, Puzzle, Team, Player, History
+from folditdb.tables import Solution, Puzzle, Team, Player, History, HistoryString
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,7 @@ def load_from_irdata(irdata, session=None):
     solution = Solution.from_irdata(irdata)
     puzzle = Puzzle.from_irdata(irdata)
     last_history = History.last_from_irdata(irdata)
+    history_string = HistoryString.from_irdata(irdata)
 
     # Check if this solution has already been loaded
     solution_exists = session.query(exists().where(Solution.id == solution.id)).scalar()
@@ -29,7 +30,8 @@ def load_from_irdata(irdata, session=None):
     # Add model objects to the current session
     # Order matters!
     puzzle = session.merge(puzzle)
-    session.add(last_history)
+    last_history = session.merge(last_history)
+    history_string = session.merge(history_string)
     session.add(solution)
 
     pdls = PDL.from_irdata(irdata)

@@ -21,6 +21,7 @@ class Solution(Base):
     id = Column(Integer, primary_key=True)
     puzzle_id = Column(Integer, ForeignKey('puzzle.id'))
     history_id = Column(String(40), ForeignKey('history.id'))
+    history_hash = Column(String(64), ForeignKey('history_string.hash'))
     solution_type = Column(String(20))
     total_moves = Column(Integer)
     score = Column(Float)
@@ -66,6 +67,16 @@ class History(Base):
         """Create a list of History objects from a history string."""
         history_ids = [x.split(':')[0] for x in irdata.history_string.split(',')]
         return [cls(id=history_id) for history_id in history_ids]
+
+
+class HistoryString(Base):
+    __tablename__ = 'history_string'
+    hash = Column(String(64), primary_key=True)
+    history_string = Column(Text)
+
+    @classmethod
+    def from_irdata(cls, irdata):
+        return cls(hash=irdata.history_hash, history_string=irdata.history_string)
 
 
 class Team(Base):
