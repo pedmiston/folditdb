@@ -17,8 +17,7 @@ def tmp_log():
 
 def test_logger_records_irdata_property_error(tmp_log, session):
     load_irdata_from_file('tests/test_data/solutions_with_errors.json', session)
-    assert len(open(tmp_log).readlines()) == 1
 
     error_log = open(tmp_log).read()
-    expected_error_msg = 'IRDataPropertyError: solution has no HISTORY'
+    expected_error_msg = 'IRDataPropertyError(solution has no HISTORY'
     assert expected_error_msg in error_log

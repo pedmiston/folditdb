@@ -63,10 +63,12 @@ def load_irdata_from_file(solutions_file, session=None):
     if local_session:
         session = Session()
 
-    for irdata in IRData.from_scrape_file(solutions_file):
+    for i, irdata in enumerate(IRData.from_scrape_file(solutions_file)):
         try:
             load_from_irdata(irdata, session)
         except Exception as err:
-            logger.error('%s: %s', err.__class__.__name__, err)
+            logger.error('%s:%s %s(%s)', solutions_file, i, err.__class__.__name__, err)
+
+    logger.error('Finished loading scape file "%s"', solutions_file)
 
     session.close()

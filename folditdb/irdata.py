@@ -244,7 +244,7 @@ class IRData:
 
     @property
     def pdl_strings(self):
-        if pdl_strings in self._cache:
+        if 'pdl_strings' in self._cache:
             return self._cache['pdl_strings']
 
         pdl_strings = self._data.get('PDL')
