@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='folditdb',
-    version='0.0.2',
+    version='0.0.3',
     packages=['folditdb'],
     install_requires=[
      'SQLAlchemy==1.2.0',
