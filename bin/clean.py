@@ -3,10 +3,22 @@ from os import environ
 from sqlalchemy import create_engine
 from folditdb.tables import Base
 
-# Clean the main database
-DB = create_engine(environ['MYSQL_FOLDIT_DB'])
-Base.metadata.drop_all(DB)
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--real', action='store_true')
+parser.add_argument('--test', action='store_true')
+args = parser.parse_args()
 
-# Clean the test database
-DB = create_engine(environ['MYSQL_FOLDIT_TEST_DB'])
-Base.metadata.drop_all(DB)
+if args.real:
+    # Clean the main database
+    DB = create_engine(environ['MYSQL_FOLDIT_DB'])
+    Base.metadata.drop_all(DB)
+
+if args.test:
+    # Clean the test database
+    DB = create_engine(environ['MYSQL_FOLDIT_TEST_DB'])
+    Base.metadata.drop_all(DB)
+
+if not any((args.real, args.test)):
+    print('Error: nothing cleaned!\n')
+    parser.print_help()
