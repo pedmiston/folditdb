@@ -2,7 +2,8 @@ import logging
 
 from sqlalchemy import exists
 
-from folditdb.irdata import IRData, PDL, IRDataPropertyError
+from folditdb.irdata import IRData, PDL
+from folditdb.irdata import IRDataPropertyError, IRDataCreationError, PDLCreationError, PDLPropertyError
 from folditdb.db import Session
 from folditdb.tables import Solution, Puzzle, Team, Player, History, HistoryString
 
@@ -63,6 +64,9 @@ def load_irdata_from_file(solutions_file, session=None):
         session = Session()
 
     for irdata in IRData.from_scrape_file(solutions_file):
-        load_from_irdata(irdata, session)
+        try:
+            load_from_irdata(irdata, session)
+        except Exception as err:
+            logger.error('%s: %s', err.__class__.__name__, err)
 
     session.close()

@@ -100,7 +100,7 @@ class IRData:
 
         filename = self._data.get('FILEPATH')
         if filename is None:
-            raise IRDataPropertyError('IRData property error: solution has no FILEPATH')
+            raise IRDataPropertyError('solution has no FILEPATH')
 
         return self._cache.setdefault('filename', filename)
 
@@ -115,7 +115,7 @@ class IRData:
         elif '/all/' in self.filename:
             solution_type = 'regular'
         else:
-            msg = 'IRData property error: solution type from filename="%s'
+            msg = 'cannot determine solution type from filename: filename="%s"'
             raise IRDataPropertyError(msg % self.filename)
 
         return self._cache.setdefault('solution_type', solution_type)
@@ -127,13 +127,13 @@ class IRData:
 
         sid_str = self._data.get('SID')
         if sid_str is None:
-            msg = 'IRData property error: no solution id, filename="%s"'
+            msg = 'solution has no SID: filename="%s"'
             raise IRDataPropertyError(msg % self.filename)
 
         try:
             solution_id = int(sid_str)
         except ValueError:
-            msg = 'IRData property error: SID is not an int: SID="%s"'
+            msg = 'SID is not an int: SID="%s"'
             raise IRDataPropertyError(msg % sid_str)
 
         return self._cache.setdefault('solution_id', solution_id)
@@ -145,13 +145,13 @@ class IRData:
 
         pid_str = self._data.get('PID')
         if pid_str is None:
-            msg = 'IRData property error: no puzzle id: filename="%s"'
+            msg = 'solution has no PID: filename="%s"'
             raise IRDataPropertyError(msg % self.filename)
 
         try:
             puzzle_id = int(pid_str)
         except ValueError:
-            msg = 'IRData property error: PID is not an int: PID="%s"'
+            msg = 'PID is not an int: PID="%s"'
             raise IRDataPropertyError(msg % pid_str)
 
         return self._cache.setdefault('puzzle_id', puzzle_id)
@@ -163,7 +163,7 @@ class IRData:
 
         history_string = self._data.get('HISTORY')
         if history_string is None:
-            msg = 'IRData property error: solution has no history: filename="%s"'
+            msg = 'solution has no HISTORY: filename="%s"'
             raise IRDataPropertyError(msg % self.filename)
 
         return self._cache.setdefault('history_string', history_string)
@@ -178,7 +178,7 @@ class IRData:
         try:
             history_id, _ = last_move_in_history.split(':')
         except ValueError:
-            msg = 'IRData property error: unable to process history string: history_string="%s"'
+            msg = 'unable to parse history: history_string="%s"'
             raise IRDataPropertyError(msg % self.history_string)
 
         return self._cache.setdefault('history_id', history_id)
@@ -200,7 +200,7 @@ class IRData:
             moves = [int(pair.split(':')[1])
                      for pair in self.history_string.split(',')]
         except (IndexError, ValueError, TypeError):
-            msg = 'IRData property error: unable to parse moves from history string: history_string="%s"'
+            msg = 'unable to parse moves from history: history_string="%s"'
             raise IRDataPropertyError(msg % self.history_string)
         else:
             total_moves = sum(moves)
@@ -214,7 +214,7 @@ class IRData:
 
         score_str = self._data.get('SCORE')
         if score_str is None:
-            msg = 'missing score: filename="%s"'
+            msg = 'solution has no SCORE: filename="%s"'
             raise IRDataPropertyError(msg % self.filename)
 
         try:
@@ -232,7 +232,7 @@ class IRData:
 
         timestamp_str = self._data.get('TIMESTAMP')
         if timestamp_str is None:
-            raise IRDataPropertyError('no timestamp: filename="%s"' % self.filename)
+            raise IRDataPropertyError('solution has no TIMESTAMP: filename="%s"' % self.filename)
 
         try:
             timestamp_int = int(timestamp_str)
@@ -241,6 +241,20 @@ class IRData:
 
         timestamp = datetime.fromtimestamp(timestamp_int)
         return self._cache.setdefault('timestamp', timestamp)
+
+    @property
+    def pdl_strings(self):
+        if pdl_strings in self._cache:
+            return self._cache['pdl_strings']
+
+        pdl_strings = self._data.get('PDL')
+        if pdl_strings is None:
+            raise IRDataPropertyError('solution has no PDLs: filename="%s"' % self.filename)
+
+        if not isinstance(pdl_strings, list):
+            pdl_strings = [pdl_strings, ]
+
+        return self._cache.setdefault('pdl_strings', pdl_strings)
 
 
 class PDL:
@@ -260,17 +274,8 @@ class PDL:
     @classmethod
     def from_irdata(cls, irdata):
         """Create PDL instances for each PDL string in an IRData object."""
-        pdl_strings = irdata._data.get('PDL')
-
-        if pdl_strings is None:
-            msg = 'IRData object has no PDL strings, filename="%s"'
-            raise PDLCreationError(msg % self.filename)
-
-        if not isinstance(pdl_strings, list):
-            pdl_strings = [pdl_strings, ]
-
         return [cls.from_pdl_string(pdl_str, irdata)
-                for pdl_str in pdl_strings]
+                for pdl_str in irdata.pdl_strings]
 
     @classmethod
     def from_pdl_string(cls, pdl_str, irdata):
@@ -279,7 +284,7 @@ class PDL:
         if pdl_str.startswith('. '):
             pdl_str = pdl_str.strip('^. ')
         else:
-            msg = 'invalid PDL string: pdl_str="%s"'
+            msg = 'unable to parse PDL: pdl_str="%s"'
             raise PDLCreationError(msg % pdl_str)
 
         fields = pdl_str.split(',')
