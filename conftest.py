@@ -65,3 +65,11 @@ def session():
     yield s
     s.close()
     Base.metadata.drop_all(DB)
+
+@pytest.fixture
+def tmp_log():
+    """Configure folditdb to log to a temporary file."""
+    tmp_log_filepath = 'tests/tmp_errors.log'
+    log.use_logging(tmp_log_filepath)
+    yield tmp_log_filepath
+    remove(tmp_log_filepath)

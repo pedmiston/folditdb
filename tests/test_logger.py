@@ -7,14 +7,6 @@ from folditdb import log, tables
 from folditdb.load import load_irdata_from_file
 from folditdb.irdata import IRData
 
-@pytest.fixture
-def tmp_log():
-    """Configure folditdb to log to a temporary file."""
-    tmp_log_filepath = 'tests/tmp_errors.log'
-    log.use_logging(tmp_log_filepath)
-    yield tmp_log_filepath
-    remove(tmp_log_filepath)
-
 def test_logger_records_irdata_property_error(tmp_log, session):
     load_irdata_from_file('tests/test_data/solutions_with_errors.json', session)
 

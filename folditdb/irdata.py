@@ -304,7 +304,8 @@ class PDL:
             player_name=player_name,
             team_name=team_name,
             player_id=player_id,
-            team_id=team_id
+            team_id=team_id,
+            pdl_str=pdl_str
         )
         return cls(pdl_data, irdata)
 
@@ -316,5 +317,46 @@ class PDL:
             team_type = 'evolver'
         return team_type
 
+    @property
+    def action_log_string(self):
+        try:
+            action_log_str = self._pdl_data['pdl_str'].split('LOG:')[1].strip()
+        except IndexError:
+            raise PDLPropertyError('pdl string has no action log: pdl_str="%s"' % self._pdl_data['pdl_str'])
+        return action_log_str
+
+    def action_logs(self):
+        return ActionLog.from_pdl(self)
+
     def __getattr__(self, key):
         return self._pdl_data[key]
+
+
+class ActionLog:
+    def __init__(self, **kwargs):
+        self._data = kwargs
+
+    @classmethod
+    def from_pdl(cls, pdl):
+        return cls.from_action_string(pdl.action_log_string)
+
+    @classmethod
+    def from_action_string(cls, action_str):
+        actions = []
+        for x in action_str.replace('|', '').split():
+            action_name, action_n_str = x.split('=')
+
+            if action_name == '':
+                action_name = 'UnknownAction'
+
+            try:
+                action_n = int(action_n_str)
+            except ValueError:
+                raise PDLPropertyError('action n is not an int: action_n_str="%s"' % action_n_str)
+
+            actions.append(cls(action_name=action_name, action_n=action_n))
+
+        return actions
+
+    def __getattr__(self, key):
+        return self._data[key]

@@ -2,10 +2,10 @@ import logging
 
 from sqlalchemy import exists
 
-from folditdb.irdata import IRData, PDL
+from folditdb.irdata import IRData, PDL, ActionLog
 from folditdb.irdata import IRDataPropertyError, IRDataCreationError, PDLCreationError, PDLPropertyError
 from folditdb.db import Session
-from folditdb.tables import Solution, Puzzle, Team, Player, History, HistoryString
+from folditdb.tables import Solution, Puzzle, Team, Player, History, HistoryString, Action
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,11 @@ def load_from_irdata(irdata, session=None):
         # Load all histories but the last one (which has already been added)
         for history in History.from_irdata(irdata)[:-1]:
             session.merge(history)
+
+        # Load final actions from these players
+        for pdl in pdls:
+            for action in Action.from_pdl(pdl):
+                session.merge(action)
 
     session.commit()
 

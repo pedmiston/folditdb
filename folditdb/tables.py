@@ -119,6 +119,7 @@ class Player(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(60))
     team_name = Column(String(60), ForeignKey('team.name'))
+    actions = relationship('Action')
 
     solutions = relationship('Solution',
         secondary=player_solutions,
@@ -133,3 +134,24 @@ class Player(Base):
             team_name=pdl.team_name
         )
         return cls(**data)
+
+class Action(Base):
+    __tablename__ = 'action'
+    id = Column(Integer(), primary_key=True)
+    action_name = Column(String(55))
+    action_n = Column(Integer())
+    player_id = Column(Integer(), ForeignKey('player.id'))
+    puzzle_id = Column(Integer(), ForeignKey('puzzle.id'))
+
+    @classmethod
+    def from_pdl(cls, pdl):
+        actions = []
+        for action_log in pdl.action_logs():
+            data = dict(
+                action_name=action_log.action_name,
+                action_n=action_log.action_n,
+                player_id=pdl.player_id,
+                puzzle_id=pdl._irdata.puzzle_id
+            )
+            actions.append(cls(**data))
+        return actions
