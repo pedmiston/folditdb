@@ -9,7 +9,7 @@ objects. Placing the constructors on the models, rather
 than on the objects in folditdb.irdata, allows the
 constructor logic to be closest to the model descriptions.
 """
-from sqlalchemy import Table, Column, String, Float, Integer, ForeignKey, Text
+from sqlalchemy import Table, Column, String, Float, Integer, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -19,12 +19,13 @@ Base = declarative_base()
 class Solution(Base):
     __tablename__ = 'solution'
     id = Column(Integer, primary_key=True)
-    puzzle_id = Column(Integer, ForeignKey('puzzle.id'))
+    puzzle_id = Column(Integer(), ForeignKey('puzzle.id'))
     history_id = Column(String(40), ForeignKey('history.id'))
     history_hash = Column(String(64), ForeignKey('history_string.hash'))
     solution_type = Column(String(20))
-    total_moves = Column(Integer)
-    score = Column(Float)
+    total_moves = Column(Integer())
+    score = Column(Float())
+    timestamp = Column(DateTime())
 
     @classmethod
     def from_irdata(cls, irdata):
@@ -35,6 +36,7 @@ class Solution(Base):
             solution_type=irdata.solution_type,
             total_moves=irdata.total_moves,
             score=irdata.score,
+            timestamp=irdata.timestamp,
         )
         return cls(**data)
 

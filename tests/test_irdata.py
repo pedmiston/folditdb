@@ -1,20 +1,24 @@
+from datetime import datetime
+
 import pytest
 
 from folditdb import tables
 from folditdb.irdata import IRData, IRDataPropertyError
 
-def test_create_irdata_object(irdata):
+def test_irdata_properties(irdata):
     assert irdata.solution_id == 1
     assert irdata.puzzle_id == 1
     assert irdata.history_id == "V3"
     assert irdata.total_moves == 19
 
-def test_create_solution_object(irdata):
-    solution = tables.Solution.from_irdata(irdata)
+def test_solution_model_fields(solution):
     assert solution.id == 1
     assert solution.puzzle_id == 1
     assert solution.history_id == "V3"
     assert solution.total_moves == 19
+
+def test_solution_has_timestamp(solution):
+    assert solution.timestamp == datetime.fromtimestamp(0)
 
 def test_read_single_solution_from_file():
     json_filepath = 'tests/test_data/single_solution.json'

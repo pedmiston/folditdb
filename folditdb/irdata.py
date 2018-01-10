@@ -1,6 +1,7 @@
 import json
 import logging
 import hashlib
+from datetime import datetime
 
 from folditdb import tables
 
@@ -213,16 +214,33 @@ class IRData:
 
         score_str = self._data.get('SCORE')
         if score_str is None:
-            msg = 'IRData property error: missing score: filename="%s"'
+            msg = 'missing score: filename="%s"'
             raise IRDataPropertyError(msg % self.filename)
 
         try:
             score = float(score_str)
         except ValueError:
-            msg = 'IRData property error: SCORE is not a float: score_str="%s"'
+            msg = 'SCORE is not a float: score_str="%s"'
             raise IRDataPropertyError(msg % score_str)
 
         return self._cache.setdefault('score', score)
+
+    @property
+    def timestamp(self):
+        if 'timestamp' in self._cache:
+            return self._cache['timestamp']
+
+        timestamp_str = self._data.get('TIMESTAMP')
+        if timestamp_str is None:
+            raise IRDataPropertyError('no timestamp: filename="%s"' % self.filename)
+
+        try:
+            timestamp_int = int(timestamp_str)
+        except ValueError:
+            raise IRdataPropertyError('timestamp not an int: timestamp_str="%s"' % timestamp_str)
+
+        timestamp = datetime.fromtimestamp(timestamp_int)
+        return self._cache.setdefault('timestamp', timestamp)
 
 
 class PDL:

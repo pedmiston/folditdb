@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 import pytest
 
-from folditdb import log
+from folditdb import log, tables
 from folditdb.tables import Base
 from folditdb.irdata import IRData
 
@@ -18,6 +18,7 @@ _solution_data = dict(
     SCORE='134.2',
     PDL='. bill,myteam,100,200',
     FILEPATH="/all/solution.pdb",
+    TIMESTAMP=0
 )
 
 _solution_data_with_multiple_players = dict(
@@ -30,6 +31,7 @@ _solution_data_with_multiple_players = dict(
         '. jim,myteam,101,200',
     ],
     FILEPATH="/all/solution.pdb",
+    TIMESTAMP=0
 )
 
 
@@ -48,6 +50,10 @@ def irdata():
 @pytest.fixture
 def irdata_with_multiple_players():
     return IRData(_solution_data_with_multiple_players)
+
+@pytest.fixture
+def solution():
+    return tables.Solution.from_irdata(IRData(_solution_data))
 
 @pytest.fixture
 def session():
