@@ -1,6 +1,7 @@
 import json
 import logging
 import hashlib
+import re
 from datetime import datetime
 
 from folditdb import tables
@@ -281,8 +282,8 @@ class PDL:
     def from_pdl_string(cls, pdl_str, irdata):
         data = {}
 
-        if pdl_str.startswith('. '):
-            pdl_str = pdl_str.strip('^. ')
+        if re.match('^\.* ', pdl_str):
+            pdl_str = pdl_str.strip('^\.* ')
         else:
             msg = 'unable to parse PDL: pdl_str="%s"'
             raise PDLCreationError(msg % pdl_str)

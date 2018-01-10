@@ -10,14 +10,14 @@ parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
 if args.real:
-    # Clean the main database
+    print('Cleaning the real database')
     DB = create_engine(environ['MYSQL_FOLDIT_DB'])
     Base.metadata.drop_all(DB)
 
 if args.test:
-    # Clean the test database
+    print('Cleaning the test database')
     DB = create_engine(environ['MYSQL_FOLDIT_TEST_DB'])
-    Base.metadata.drop_all(DB)
+    Base.metadata.drop_all(DB.connect())
 
 if not any((args.real, args.test)):
     print('Error: nothing cleaned!\n')
