@@ -1,6 +1,7 @@
 import logging
 
 from sqlalchemy import exists
+from sqlalchemy.exc import DBAPIError
 
 from folditdb.irdata import IRData, PDL, ActionLog
 from folditdb.irdata import IRDataPropertyError, IRDataCreationError, PDLCreationError, PDLPropertyError
@@ -12,16 +13,22 @@ logger = logging.getLogger(__name__)
 class DuplicateIRDataException(Exception):
     pass
 
-def load_from_irdata(irdata, session=None):
+def load_from_irdata(irdata, session=None, return_on_error=False):
     local_session = (session is None)
     if local_session:
         session = Session()
 
-    # Create model objects from IRData
-    solution = Solution.from_irdata(irdata)
-    puzzle = Puzzle.from_irdata(irdata)
-    last_history = History.last_from_irdata(irdata)
-    history_string = HistoryString.from_irdata(irdata)
+    try:
+        # Create model objects from IRData
+        solution = Solution.from_irdata(irdata)
+        puzzle = Puzzle.from_irdata(irdata)
+        last_history = History.last_from_irdata(irdata)
+        history_string = HistoryString.from_irdata(irdata)
+    except IRDataPropertyError:
+        if return_on_error:
+            return
+        else:
+            raise
 
     # Check if this solution has already been loaded
     solution_exists = session.query(exists().where(Solution.id == solution.id)).scalar()
@@ -35,10 +42,23 @@ def load_from_irdata(irdata, session=None):
     history_string = session.merge(history_string)
     session.add(solution)
 
-    pdls = PDL.from_irdata(irdata)
+    try:
+        pdls = PDL.from_irdata(irdata)
+    except PDLCreationError:
+        if return_on_error:
+            return
+        else:
+            raise
+
     for pdl in pdls:
-        team = Team.from_pdl(pdl)
-        player = Player.from_pdl(pdl)
+        try:
+            team = Team.from_pdl(pdl)
+            player = Player.from_pdl(pdl)
+        except PDLPropertyError:
+            if return_on_error:
+                return
+            else:
+                raise
 
         session.merge(team)
         player = session.merge(player)
@@ -51,8 +71,16 @@ def load_from_irdata(irdata, session=None):
 
         # Load final actions from these players
         for pdl in pdls:
-            for action in Action.from_pdl(pdl):
-                session.merge(action)
+            try:
+                actions = Action.from_pdl(pdl)
+            except PDLPropertyError:
+                if return_on_error:
+                    return
+                else:
+                    raise
+            else:
+                for action in actions:
+                    session.merge(action)
 
     session.commit()
 
@@ -71,6 +99,13 @@ def load_irdata_from_file(solutions_file, session=None):
     for i, irdata in enumerate(IRData.from_scrape_file(solutions_file)):
         try:
             load_from_irdata(irdata, session)
+        except DBAPIError as err:
+            if err.connection_invalidated:
+                logger.error("Lost connection to DB, trying again")
+                session.rollback()
+                load_from_irdata(irdata, session, return_on_error=True)
+            else:
+                raise
         except Exception as err:
             logger.error('%s:%s %s(%s)', solutions_file, i, err.__class__.__name__, err)
 
