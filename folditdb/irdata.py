@@ -255,6 +255,8 @@ class IRData:
         if not isinstance(pdl_strings, list):
             pdl_strings = [pdl_strings, ]
 
+        pdl_strings = [str(pdl_str.encode('latin-1', 'ignore').decode('latin-1')) for pdl_str in pdl_strings]
+
         return self._cache.setdefault('pdl_strings', pdl_strings)
 
 
