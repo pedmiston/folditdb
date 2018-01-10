@@ -29,22 +29,22 @@ def test_parse_complex_action_string():
     assert actions[-1].action_name == 'UnknownAction'
     assert actions[-1].action_n == 8
 
-def test_actions_are_parsed_from_solution_with_two_players(tmp_log, session):
+def test_actions_are_parsed_from_solution_with_two_players(session):
     load_single_irdata_file('tests/test_data/solution_with_two_players.json', session)
     player = session.query(tables.Player).filter_by(name='Blipperman').first()
     first_action = player.actions[0]
     assert first_action.action_name == 'ActionBandAddAtomAtom'
     assert first_action.action_n == 6
 
-def test_duplicate_actions_per_player_are_created(tmp_log, session):
+def test_duplicate_actions_per_player_are_created(session):
     load_single_irdata_file('tests/test_data/multiple_pdls_same_player.json', session)
-    player = session.query(tables.Player).filter_by(name='Mark-').first()
+    player = session.query(tables.Player).filter_by(name='retiredmichael').first()
     dup_actions = session.query(tables.Action).filter_by(player_id=player.id, action_name='ActionStandaloneResetRecentBest').all()
     assert len(dup_actions) == 2
     assert dup_actions[0].action_n == 200
     assert dup_actions[1].action_n == 519
 
-def test_duplicate_pdls_per_player_are_created(tmp_log, session):
+def test_duplicate_pdls_per_player_are_created(session):
     load_single_irdata_file('tests/test_data/multiple_pdls_same_player_continued.json', session)
     player = session.query(tables.Player).filter_by(name='Mark-').first()
     dup_actions = session.query(tables.Action).filter_by(player_id=player.id, action_name='Design_ModeACTIVATE').all()

@@ -2,7 +2,7 @@ import pytest
 
 from folditdb.irdata import IRData, PDL
 from folditdb.tables import Solution, Player
-from folditdb.load import load_from_irdata, load_single_irdata_file, load_irdata_from_file, DuplicateIRDataException
+from folditdb.load import load_from_irdata, load_single_irdata_file, load_top_solutions_from_file, DuplicateIRDataException
 
 def test_load_irdata_in_db(irdata, session):
     load_from_irdata(irdata, session)
@@ -41,9 +41,9 @@ def test_load_single_irdata_file(session):
     solution = session.query(Solution).first()
     assert solution.id == 356820465
 
-def test_load_irdata_from_file(session):
+def test_load_top_solutions_from_file(session):
     solutions_file = 'tests/test_data/two_solutions_to_same_puzzle.json'
-    load_irdata_from_file(solutions_file, session)
+    load_top_solutions_from_file(solutions_file, session)
     results = session.query(Solution).all()
     assert len(results) == 2
 

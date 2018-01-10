@@ -25,9 +25,9 @@ def load_top_solutions_from_file(top_solutions_file, session=None):
             load_from_irdata(irdata, session)
         except DBAPIError as err:
             session.rollback()
-            logger.error('%s:%s %s(%s)', solutions_file, i+1, err.__class__.__name__, err)
+            logger.error('%s:%s %s(%s)', top_solutions_file, i+1, err.__class__.__name__, err)
         except Exception as err:
-            logger.error('%s:%s %s(%s)', solutions_file, i+1, err.__class__.__name__, err)
+            logger.error('%s:%s %s(%s)', top_solutions_file, i+1, err.__class__.__name__, err)
 
     session.close()
 
