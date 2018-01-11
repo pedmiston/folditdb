@@ -6,7 +6,7 @@ Most of the table models have class methods for creation.
 The reason for this is to provide alternate constructors
 for the most common but idiosyncratic ways of creating model
 objects. Placing the constructors on the models, rather
-than on the objects in folditdb.irdata, allows the
+than on the objects in folditdb/irdata.py, allows the
 constructor logic to be closest to the model descriptions.
 """
 from sqlalchemy import Table, Column, String, Float, Integer, ForeignKey, Text, DateTime
@@ -15,71 +15,90 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
+class IRData(Base):
+    """An IRData is created from a solution pdb file."""
+    __tablename__ = 'irdata'
+    irdata_id = Column(Integer(), primary_key=True)
+    filename = Column(String(100), index=True)
+    data = Column(Text())
+    file_type = Column(String(10))
+
+    @classmethod
+    def from_irdata(cls, irdata):
+        return cls(filename=irdata.filename,
+                   data=irdata.json_str,
+                   file_type=irdata.file_type)
+
+class Competition(Base):
+    """A competition is a team competing in a puzzle."""
+    __tablename__ = 'competition'
+    competition_id = Column(Integer(), primary_key=True)
+    team_id = Column(Integer(), ForeignKey('team.team_id'))
+    puzzle_id = Column(Integer(), ForeignKey('puzzle.puzzle_id'))
+
+    @classmethod
+    def from_irdata(cls, irdata):
+        return cls(puzzle_id=irdata.puzzle_id,
+                   team_id=irdata.team_id)
+
+class Submission(Base):
+    """A submission is a solution submitted in a competition."""
+    __tablename__ = 'submission'
+    submission_id = Column(Integer(), primary_key=True)
+    competition_id = Column(Integer(), ForeignKey('competition.competition_id'))
+    solution_id = Column(Integer(), ForeignKey('solution_history.solution_history_id'))
+    timestamp = Column(DateTime(), nullable=False)
+
+    @classmethod
+    def from_irdata(cls, irdata, **kwargs):
+        kwargs.update(dict(timestamp=irdata.timestamp,
+                           history_data=irdata.history_string,
+                           score=irdata.score))
+        return cls(**kwargs)
+
+class TopSubmission(Base):
+    """A top submission is a submission with rank information."""
+    __tablename__ = 'top_submission'
+    submission_id = Column(Integer(), ForeignKey('submission.submission_id'), primary_key=True)
+    rank_type = Column(String(10))
+    rank = Column(Integer())
+
+    @classmethod
+    def from_irdata(cls, irdata, **kwargs):
+        kwargs.update(dict(rank_type=irdata.rank_type,
+                           rank=irdata.rank))
+        return cls(**kwargs)
 
 class Solution(Base):
+    """A solution is a molecule with a particular history."""
     __tablename__ = 'solution'
-    id = Column(Integer, primary_key=True)
-    puzzle_id = Column(Integer(), ForeignKey('puzzle.id'))
-    history_id = Column(String(40), ForeignKey('history.id'))
-    history_hash = Column(String(64), ForeignKey('history_string.hash'))
-    solution_type = Column(String(20))
-    total_moves = Column(Integer())
-    score = Column(Float())
-    timestamp = Column(DateTime())
-
-    @classmethod
-    def from_irdata(cls, irdata):
-        data = dict(
-            id=irdata.solution_id,
-            puzzle_id=irdata.puzzle_id,
-            history_id=irdata.history_id,
-            solution_type=irdata.solution_type,
-            total_moves=irdata.total_moves,
-            score=irdata.score,
-            timestamp=irdata.timestamp,
-        )
-        return cls(**data)
-
-
-class Puzzle(Base):
-    __tablename__ = 'puzzle'
-    id = Column(Integer, primary_key=True)
-
-    solutions = relationship('Solution')
-
-    @classmethod
-    def from_irdata(cls, irdata):
-        return cls(id=irdata.puzzle_id)
-
+    solution_id = Column(Integer(), primary_key=True)
+    molecule_id = Column(Integer(), ForeignKey('molecule.molecule_id'))
+    history_id = Column(Integer(), ForeignKey('history.history_id'))
 
 class History(Base):
+    """A history is a sequence of edits."""
     __tablename__ = 'history'
-    id = Column(String(40), primary_key=True)
+    history_id = Column(Integer(), primary_key=True)
+    history_data = Column(Text())
+    history_hash = Column(String(64), unique=True)
+    total_moves = Column(Integer())
+    edits = relationship('Edit')
 
-    solutions = relationship('Solution')
+class Edit(Base):
+    """An edit is a change from one molecule to another."""
+    __tablename__ = 'edit'
+    edit_id = Column(Integer(), primary_key=True)
+    molecule_id = Column(Integer(), ForeignKey('molecule.molecule_id'))
+    prev_molecule_id = Column(Integer(), ForeignKey('molecule.molecule_id'))
+    moves = Column(Integer())
 
-    @classmethod
-    def last_from_irdata(cls, irdata):
-        """Create a history object for the last history in the string."""
-        last_history_id = irdata.history_string.split(',')[-1].split(':')[0]
-        return cls(id=last_history_id)
-
-    @classmethod
-    def from_irdata(cls, irdata):
-        """Create a list of History objects from a history string."""
-        history_ids = [x.split(':')[0] for x in irdata.history_string.split(',')]
-        return [cls(id=history_id) for history_id in history_ids]
-
-
-class HistoryString(Base):
-    __tablename__ = 'history_string'
-    hash = Column(String(64), primary_key=True)
-    history_string = Column(Text)
-
-    @classmethod
-    def from_irdata(cls, irdata):
-        return cls(hash=irdata.history_hash, history_string=irdata.history_string)
-
+class Molecule(Base):
+    """A molecule is the basis for scoring and ranking solutions."""
+    __tablename__ = 'molecule'
+    molecule_id = Column(Integer(), primary_key=True)
+    molecule_hash = Column(String(40), unique=True)
+    score = Column(Float())
 
 class Team(Base):
     """Teams are collections of one or more players.
