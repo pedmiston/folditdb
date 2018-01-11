@@ -347,7 +347,11 @@ class ActionLog:
     def from_action_string(cls, action_str):
         actions = []
         for x in action_str.replace('|', '').split():
-            action_name, action_n_str = x.split('=')
+            try:
+                action_name, action_n_str = x.split('=')
+            except ValueError:
+                action_name = x
+                action_n_str = '0'
 
             if action_name == '':
                 action_name = 'UnknownAction'
